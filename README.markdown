@@ -5,7 +5,7 @@ PathJS is a lightweight, client-side routing library that allows you to create "
 # Features #
 * Lightweight
 * Supports the HTML5 History API, the 'onhashchange' method, and graceful degredation
-* Supports root routes, rescue methods, paramaterized routes, optional route components (dynamic routes), and Aspect Oriented Programming
+* Supports root routes, fallback methods, paramaterised routes, optional route components (dynamic routes), and Aspect Oriented Programming
 * Well Tested (tests available in the `./tests` directory)
 * Compatible with all major browsers (Tested on Firefox 3.6, Firefox 4.0, Firefox 5.0, Chrome 9, Opera 11, IE7, IE8, IE9)
 * Independant of all third party libraries, but plays nice with all of them
@@ -22,11 +22,11 @@ PathJS is a lightweight, client-side routing library that allows you to create "
     
     Path.map("#/comments").to(function(){
         alert("Comments!");
-    }).enter(clearPanel);
+    }).before(clearPanel);
     
     Path.map("#/posts").to(function(){
         alert("Posts!");
-    }).enter(clearPanel);
+    }).before(clearPanel);
     
     Path.root("#/posts");
     
@@ -40,7 +40,7 @@ You can find examples on the official [Github Page](http://mtrpcic.github.com/pa
 
 # Running Tests #
 To run the tests, simply navigate to the `./tests` folder and open the HTML file in your browser.  Please note that the HTML5 History API is not compatible with the
-`file://` protocol, and to run the tests in the `tests/pushstate` folder, you will need to run them through a webserver such as nginx or Apache.
+`file://` protocol.
 
 # Next Steps #
 * Adding support for "after" callbacks
@@ -56,7 +56,7 @@ To make a pull request, please do the following:
 * Do **not** modify the `Path.version` attribute.  I will modify that manually when merging the request
 
 # Disclaimer #
-This code is provided with no warranty.  While I strive to maintain backwards compatibility, the code is still under active development.  As this is the case, some revisions may break break compatibility with earlier versions of the library.  Please keep this in mind when using PathJS.
+This script is provided without warranty. As is, the script currently passes all its tests and so is believed to be fit for use. However, it is possible that the tests do not fulfil all possible scenarios and consequently further changes may be made which may break backwards compatibility. It should also be remembered that this script is not yet at version 1.
 
 # Copyright and Licensing #
-Copyright (c) 2011 Mike Trpcic, released under the MIT license.
+Copyright (c) 2014 Andrew Jameson, released under the MIT license.
