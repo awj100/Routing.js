@@ -10,7 +10,7 @@ Routing.js is a lightweight, client-side routing library that allows you to crea
 * Compatible with all major browsers (Tested on Firefox 3.6, Firefox 4.0, Firefox 5.0, Chrome 9, Opera 11, IE7, IE8, IE9)
 * Independant of all third party libraries, but plays nice with all of them
 
-Routing.js is a fork of [PathJ](https://github.com/mtrpcic/pathjs) the primary differences are
+Routing.js is a fork of [PathJS](https://github.com/mtrpcic/pathjs) the primary differences are
 * Internal logic for route-matching
 * Parameters are returned as objects rather than the simple value from the URL
 
