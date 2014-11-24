@@ -1,4 +1,10 @@
-var Path = function (win, doc) {
+/*
+Routing.js © Andrew Jameson, 2014, and licensed under the MIT license.
+Routing.js is hosted at https://github.com/awj100/Routing.js
+Routing.js was forked from PathJS, https://github.com/mtrpcic/pathjs
+*/
+
+var Routing = function (win, doc) {
 
     var self = this,
 
