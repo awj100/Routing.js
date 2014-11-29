@@ -16,25 +16,32 @@ Routing.js is a fork of [PathJS](https://github.com/mtrpcic/pathjs) the primary 
 
 # Using Routing.js - A Brief Example #
 
-    function clearPanel(){
-        // You can put some code in here to do fancy DOM transitions, such as fade-out or slide-in.
-    }
+```
+function clearPanel(){
+    // You can put some code in here to do fancy DOM transitions, such as fade-out or slide-in.
+}
     
-    Routing.map("#/users").to(function(){
-        alert("Users!");
-    });
+Routing.map("#/users")
+        .to(function(){
+            alert("Users!");
+        });
     
-    Routing.map("#/comments").to(function(){
-        alert("Comments!");
-    }).before(clearPanel);
+Routing.map("#/comments")
+        .to(function(){
+            alert("Comments!");
+        })
+        .before(clearPanel);
     
-    Routing.map("#/posts").to(function(){
-        alert("Posts!");
-    }).before(clearPanel);
+Routing.map("#/posts")
+        .to(function(){
+            alert("Posts!");
+        })
+        .before(clearPanel);
     
-    Routing.root("#/posts");
+Routing.root("#/posts");
     
-    Routing.listen();
+Routing.listen();
+```
 
 
 # Running Tests #
