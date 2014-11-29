@@ -8,7 +8,9 @@ var Routing = function (win, doc) {
 
     var self = this,
 
-        refreshing = false,
+        doBefore = [],
+
+        doLeaving = null,
 
         history = {
             "initial": {}, // Empty container for "Initial Popstate" checking variables.
@@ -66,40 +68,44 @@ var Routing = function (win, doc) {
             }
         },
 
+        refreshing = false,
+
         route = function(path) {
 
-            var self = this;
+            var thisRoute = this;
 
-            self.path = path;
-            self.action = null;
-            self.do_before = [];
-            self.do_exit = null;
-            self.params = {};
-            self.segments = [];
-            self.mandatory = 0;
-            self.mandWithOpts = 0;
+            thisRoute.path = path;
+            thisRoute.action = null;
+            thisRoute.doBefore = [];
+            thisRoute.doLeaving = null;
+            thisRoute.fromCache = false;
+            thisRoute.params = {};
+            thisRoute.segments = [];
+            thisRoute.mandatory = 0;
+            thisRoute.mandWithOpts = 0;
 
-            self.before = function(fns) {
+            thisRoute.before = function (fns) {
 
-                if (fns instanceof Array) {
+                if (Object.prototype.toString.call(fns) === '[object Array]') {
 
-                    this.do_before = this.do_before.concat(fns);
+                    thisRoute.doBefore = thisRoute.doBefore.concat(fns);
 
                 } else {
 
-                    this.do_before.push(fns);
+                    thisRoute.doBefore.push(fns);
                 }
 
-                return this;
+                return thisRoute;
             };
 
-            self.leaving = function(fn) {
+            thisRoute.leaving = function (fn) {
 
-                this.do_exit = fn;
-                return this;
+                thisRoute.doLeaving = fn;
+
+                return thisRoute;
             };
 
-            self.partition = function() {
+            thisRoute.partition = function () {
 
                 var parts = [],
                     options = [],
@@ -120,7 +126,7 @@ var Routing = function (win, doc) {
                 return options;
             };
 
-            self.run = function() {
+            thisRoute.run = function () {
 
                 var haltExecution = false,
                     i = 0,
@@ -130,14 +136,15 @@ var Routing = function (win, doc) {
 
                 for (; i < iMax; i++) {
 
-                    if (routes["defined"][i].path === this.path) {
+                    if (routes["defined"][i].path === thisRoute.path) {
 
                         definedRoute = routes["defined"][i];
 
-                        if (definedRoute.do_before.length > 0) {
-                            for (i = 0, iMax = definedRoute.do_before.length; i < iMax; i++) {
+                        // handle this route's doBefore functions
+                        if (definedRoute.doBefore.length > 0) {
+                            for (i = 0, iMax = definedRoute.doBefore.length; i < iMax; i++) {
 
-                                result = definedRoute.do_before[i].apply(this, []);
+                                result = definedRoute.doBefore[i].apply(thisRoute, []);
 
                                 if (result === false) {
                                     haltExecution = true;
@@ -146,7 +153,20 @@ var Routing = function (win, doc) {
                             }
                         }
 
-                        if (!haltExecution) {
+                        // handle the global doBefore functions
+                        if (!haltExecution && doBefore.length > 0) {
+                            for (var j = 0, jMax = doBefore.length; j < jMax; j++) {
+
+                                result = doBefore[j].apply(thisRoute, []);
+
+                                if (result === false) {
+                                    haltExecution = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!haltExecution && typeof (definedRoute.action) === "function") {
                             definedRoute.action();
                         }
 
@@ -155,22 +175,139 @@ var Routing = function (win, doc) {
                 }
             };
 
-            self.to = function(fn) {
+            thisRoute.to = function (fn) {
 
-                this.action = fn;
-                return this;
+                thisRoute.action = fn;
+
+                return thisRoute;
             };
         },
 
         routes = {
+            "before": function(fns) {
+
+                if (Object.prototype.toString.call(fns) === '[object Array]') {
+
+                    doBefore = doBefore.concat(fns);
+
+                } else {
+
+                    doBefore.push(fns);
+                }
+
+                return this;
+            },
+            "cache": [],
             "current": null,
-            "root": null,
+            "defined": [], // this will host instances of 'route'
             "fallback": null,
+            "leaving": function(fn) {
+
+                doLeaving = fn;
+
+                return this;
+            },
             "previous": null,
-            "defined": []   // this will host instances of 'route'
+            "root": null
         },
 
-        addOrGetRoute = function(path) {
+        checkParamsChanged = function(definedRoute, params) {
+
+            // if the path template of the matched route is the same as the path template of the previous route
+            // then check which params have changed
+            if (routes.current !== null && routes.current.path === definedRoute.path) {
+
+                var previousParams = routes.current.params;
+                for (var propertyName in params) {
+
+                    var thisPropVal = params[propertyName]["value"],
+                        previousProp = previousParams[propertyName];
+
+                    params[propertyName]["hasChanged"] = typeof (previousProp) !== "undefined"
+                                                             ? previousProp["value"] !== thisPropVal
+                                                             : true;
+                }
+            }
+
+            // only assign the params object if it pertains to this route
+            definedRoute.params = params;
+        },
+
+        doDispatch = function(passedPath) {
+
+            // check if there's a 'refresh' param at the end of the URL - must be at the end
+            var params = passedPath.split("/");
+            if (params.pop() === "refresh") {
+
+                win.location.hash = params.join("/");
+                refreshing = true;
+
+                return false;
+            }
+
+            if (routes.current === null || routes.current.path !== passedPath || refreshing) {
+
+                routes.previous = routes.current;
+                routes.current = doMatch(passedPath);
+                refreshing = false;
+
+                if (routes.previous && routes.previous.doLeaving !== null && typeof (routes.previous.doLeaving) === "function") {
+
+                    routes.previous.doLeaving();
+                }
+
+                if (doLeaving !== null && typeof (doLeaving) === "function") {
+                    doLeaving();
+                }
+
+                if (routes.current !== null) {
+
+                    routes.current.run();
+
+                    return true;
+
+                } else {
+
+                    if (routes.fallback !== null) {
+                        routes.fallback();
+                    }
+                }
+            }
+
+            return true;
+        },
+
+        doFallback = function(fn) {
+
+            routes.fallback = fn;
+        },
+
+        doListen = function() {
+
+            var fnDispatch = function() {
+                doDispatch(location.hash);
+            };
+
+            if (location.hash === "") {
+                if (routes.root !== null) {
+                    location.hash = routes.root;
+                }
+            }
+
+            // The 'doc.documentMode' checks below ensure that PathJS fires the right events
+            // even in IE "Quirks Mode".
+            if ("onhashchange" in win && (!doc.documentMode || doc.documentMode >= 8)) {
+                win.onhashchange = fnDispatch;
+            } else {
+                setInterval(doDispatch, 50);
+            }
+
+            if (location.hash !== "") {
+                fnDispatch();
+            }
+        },
+
+        doMap = function(path) {
 
             // check whether this route has already been declared
             for (var i = 0, iMax = routes["defined"].length; i < iMax; i++) {
@@ -210,79 +347,29 @@ var Routing = function (win, doc) {
             return r;
         },
 
-        doDispatch = function(passedPath) {
-
-            // check if there's a 'refresh' param at the end of the URL - must be at the end
-            var params = passedPath.split("/");
-            if (params.pop() === "refresh") {
-
-                win.location.hash = params.join("/");
-                refreshing = true;
-                return false;
-            }
-
-            if (routes.current === null || routes.current.path !== passedPath || refreshing) {
-
-                routes.previous = routes.current;
-                routes.current = doMatch(passedPath);
-                refreshing = false;
-
-                if (routes.previous && routes.previous.do_exit !== null) {
-
-                    routes.previous.do_exit();
-                }
-
-                if (routes.current !== null) {
-
-                    routes.current.run();
-                    return true;
-
-                } else {
-
-                    if (routes.fallback !== null) {
-                        routes.fallback();
-                    }
-                }
-            }
-
-            return true;
-        },
-
-        doFallback = function(fn) {
-
-            routes.fallback = fn;
-        },
-
-        doListen = function() {
-            var fnDispatch = function() {
-                doDispatch(location.hash);
-            };
-
-            if (location.hash === "") {
-                if (routes.root !== null) {
-                    location.hash = routes.root;
-                }
-            }
-
-            // The 'doc.documentMode' checks below ensure that PathJS fires the right events
-            // even in IE "Quirks Mode".
-            if ("onhashchange" in win && (!doc.documentMode || doc.documentMode >= 8)) {
-                win.onhashchange = fnDispatch;
-            } else {
-                setInterval(doDispatch, 50);
-            }
-
-            if (location.hash !== "") {
-                fnDispatch();
-            }
-        },
-
-        doMap = function(path) {
-
-            return addOrGetRoute(path);
-        },
-
         doMatch = function(path) {
+
+            var definedRoute;
+
+            // check whether we have this path in the cache
+            for (var i = 0, iMax = routes.cache.length; i < iMax; i++) {
+
+                if (routes.cache[i].path === path) {
+
+                    // this path has been cached
+
+                    definedRoute = routes.cache[i].mappedTo;
+
+                    // check whether each param has been changed since the last route
+                    checkParamsChanged(definedRoute, routes.cache[i].params);
+
+                    definedRoute.fromCache = true;
+
+                    return definedRoute;
+                }
+            }
+
+            // no match was found in the cache
 
             var i = 0,
                 iMax = routes["defined"].length,
@@ -292,7 +379,7 @@ var Routing = function (win, doc) {
             // - remember that the routes are ordered from the most params to the least
             for (; i < iMax; i++) {
 
-                var definedRoute = routes["defined"][i];
+                definedRoute = routes["defined"][i];
 
                 // ensure that the current defined route has
                 // - the same or less mandatory segments than the current URL segments
@@ -339,24 +426,17 @@ var Routing = function (win, doc) {
 
                 if (matchSoFar) {
 
-                    // if the path template of the matched route is the same as the path template of the previous route
-                    // then check which params have changed
-                    if (routes.current !== null && routes.current.path === definedRoute.path) {
+                    // cache this route
+                    routes.cache.push({
+                        params: params,
+                        path: path,
+                        mappedTo: definedRoute
+                    });
 
-                        var previousParams = routes.current.params;
-                        for (var propertyName in params) {
+                    definedRoute.fromCache = false;
 
-                            var thisPropVal = params[propertyName]["value"],
-                                previousProp = previousParams[propertyName];
-
-                            params[propertyName]["hasChanged"] = typeof (previousProp) !== "undefined"
-                                                                     ? previousProp["value"] !== thisPropVal
-                                                                     : true;
-                        }
-                    }
-
-                    // only assign the params object if it pertains to this route
-                    definedRoute.params = params;
+                    // check whether each param has been changed since the last route
+                    checkParamsChanged(definedRoute, params);
 
                     return definedRoute;
                 }
