@@ -105,27 +105,6 @@ var Routing = function (win, doc) {
                 return thisRoute;
             };
 
-            thisRoute.partition = function () {
-
-                var parts = [],
-                    options = [],
-                    re = /\(([^}]+?)\)/g,
-                    text,
-                    i = 0;
-
-                while (text = re.exec(this.path)) {
-                    parts.push(text[1]);
-                }
-
-                options.push(this.path.split("(")[0]);
-
-                for (; i < parts.length; i++) {
-                    options.push(options[options.length - 1] + parts[i]);
-                }
-
-                return options;
-            };
-
             thisRoute.run = function () {
 
                 var haltExecution = false,
@@ -245,6 +224,8 @@ var Routing = function (win, doc) {
                 return false;
             }
 
+            passedPath = passedPath.replace(/#!?\/?/, "");
+
             if (routes.current === null || routes.current.path !== passedPath || refreshing) {
 
                 routes.previous = routes.current;
@@ -307,7 +288,9 @@ var Routing = function (win, doc) {
             }
         },
 
-        doMap = function(path) {
+        doMap = function (path) {
+
+            path = path.replace(/#!?\/?/, "");
 
             // check whether this route has already been declared
             for (var i = 0, iMax = routes["defined"].length; i < iMax; i++) {
@@ -316,8 +299,7 @@ var Routing = function (win, doc) {
                 }
             }
 
-            // .slice(1) removes the first character, '#'
-            var segments = path.slice(1).split(/[/|\(/?]+/),
+            var segments = path.split(/[/|\(/?]+/),
                 r = new route(path),
                 i = 0,
                 iMax = segments.length;
@@ -373,7 +355,7 @@ var Routing = function (win, doc) {
 
             var i = 0,
                 iMax = routes["defined"].length,
-                segments = path.slice(1).split("/");
+                segments = path.split("/");
 
             // loop through each route
             // - remember that the routes are ordered from the most params to the least
