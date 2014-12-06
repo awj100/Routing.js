@@ -7,7 +7,7 @@ Routing.js is a lightweight, client-side routing library that allows you to crea
 * Supports the HTML5 History API, the 'onhashchange' method, and graceful degredation
 * Supports root routes, fallback methods, paramaterised routes, optional route components (dynamic routes), and Aspect Oriented Programming
 * Well Tested (tests available in the `./tests` directory)
-* Compatible with all major browsers (Tested on Firefox 3.6, Firefox 4.0, Firefox 5.0, Chrome 9, Opera 11, IE7, IE8, IE9)
+* Compatible with all major browsers (Tested on Firefox 4+, Chrome 14+, Opera 11.1+, IE8+)
 * Independant of all third party libraries, but plays nice with all of them
 
 Routing.js is a fork of [PathJS](https://github.com/mtrpcic/pathjs) the primary differences are
