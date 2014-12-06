@@ -266,13 +266,11 @@ var Routing = function (win, doc) {
         doListen = function() {
 
             var fnDispatch = function() {
-                doDispatch(location.hash);
+                doDispatch(win.location.hash);
             };
 
-            if (location.hash === "") {
-                if (routes.root !== null) {
-                    location.hash = routes.root;
-                }
+            if (win.location.hash === "" && routes.root !== null) {
+                win.location.hash = routes.root;
             }
 
             // The 'doc.documentMode' checks below ensure that PathJS fires the right events
@@ -280,11 +278,11 @@ var Routing = function (win, doc) {
             if ("onhashchange" in win && (!doc.documentMode || doc.documentMode >= 8)) {
                 win.onhashchange = fnDispatch;
             } else {
-                setInterval(doDispatch, 50);
+                setInterval(fnDispatch, 50);
             }
 
-            if (location.hash !== "") {
-                fnDispatch();
+            if (win.location.hash !== "") {
+                doDispatch(win.location.hash);
             }
         },
 
