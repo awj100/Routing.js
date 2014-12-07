@@ -74,15 +74,15 @@ var Routing = function (win, doc) {
 
             var thisRoute = this;
 
-            thisRoute.path = path;
             thisRoute.action = null;
             thisRoute.doBefore = [];
             thisRoute.doLeaving = null;
             thisRoute.fromCache = false;
-            thisRoute.params = {};
-            thisRoute.segments = [];
             thisRoute.mandatory = 0;
             thisRoute.mandWithOpts = 0;
+            thisRoute.params = {};
+            thisRoute.path = path;
+            thisRoute.segments = [];
 
             thisRoute.before = function (fns) {
 
@@ -494,7 +494,7 @@ var Routing = function (win, doc) {
         };
     
     return {
-        "version": "0.9.0",
+        "version": "0.9.1",
         "map": doMap,
         "root": doRoot,
         "fallback": doFallback,
