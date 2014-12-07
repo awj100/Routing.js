@@ -43,6 +43,8 @@ Routing.root("#/posts");
 Routing.listen();
 ```
 
+# Documentation #
+The [Wiki](https://github.com/awj100/Routing.js/wiki) details the objects, functions and properties which are exposed by Routing.js.
 
 # Running Tests #
 To run the tests, simply navigate to the `./tests` folder and open the HTML file in your browser.  Please note that the HTML5 History API is not compatible with the
