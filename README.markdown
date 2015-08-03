@@ -27,16 +27,16 @@ Routing.map("#/users")
         });
     
 Routing.map("#/comments")
+        .before(clearPanel)
         .to(function(){
             alert("Comments!");
-        })
-        .before(clearPanel);
+        });
     
 Routing.map("#/posts")
+        .before(clearPanel)
         .to(function(){
             alert("Posts!");
-        })
-        .before(clearPanel);
+        });
     
 Routing.root("#/posts");
     
