@@ -108,8 +108,7 @@ var Routing = function (win, doc) {
 
             thisRoute.run = function () {
 
-                var haltExecution = false,
-                    i = 0,
+                var i = 0,
                     iMax = routes["defined"].length,
                     result,
                     definedRoute;
@@ -122,31 +121,30 @@ var Routing = function (win, doc) {
 
                         // handle this route's doBefore functions
                         if (definedRoute.doBefore.length > 0) {
+
                             for (i = 0, iMax = definedRoute.doBefore.length; i < iMax; i++) {
 
                                 result = definedRoute.doBefore[i].apply(thisRoute, []);
 
-                                if (result === false) {
-                                    haltExecution = true;
-                                    break;
+                                if (typeof (result) === "boolean" && !result) {
+                                    return false;
                                 }
                             }
                         }
 
                         // handle the global doBefore functions
-                        if (!haltExecution && doBefore.length > 0) {
+                        if (doBefore.length > 0) {
                             for (var j = 0, jMax = doBefore.length; j < jMax; j++) {
 
                                 result = doBefore[j].apply(thisRoute, []);
 
-                                if (result === false) {
-                                    haltExecution = true;
-                                    break;
+                                if (typeof (result) === "boolean" && !result) {
+                                    return false;
                                 }
                             }
                         }
 
-                        if (!haltExecution && typeof (definedRoute.action) === "function") {
+                        if (typeof (definedRoute.action) === "function") {
                             definedRoute.action();
                         }
 
@@ -193,9 +191,7 @@ var Routing = function (win, doc) {
 
         checkParamsChanged = function(definedRoute, params) {
 
-            // if the path template of the matched route is the same as the path template of the previous route
-            // then check which params have changed
-            if (routes.current !== null && routes.current.path === definedRoute.path) {
+            if (routes.current !== null) {
 
                 var previousParams = routes.current.params;
                 for (var propertyName in params) {
@@ -204,12 +200,11 @@ var Routing = function (win, doc) {
                         previousProp = previousParams[propertyName];
 
                     params[propertyName]["hasChanged"] = typeof (previousProp) !== "undefined"
-                                                             ? previousProp["value"] !== thisPropVal
-                                                             : true;
+                                                         ? previousProp["value"] !== thisPropVal
+                                                         : true;
                 }
             }
 
-            // only assign the params object if it pertains to this route
             definedRoute.params = params;
         },
 
@@ -493,15 +488,15 @@ var Routing = function (win, doc) {
 
             return 0;
         };
-    
+
     return {
-        "version": "0.9.2",
-        "map": doMap,
-        "root": doRoot,
         "fallback": doFallback,
         "history": history,
         "listen": doListen,
+        "map": doMap,
         "refresh": doRefresh,
-        "routes": routes
+        "root": doRoot,
+        "routes": routes,
+        "version": "0.9.3"
     };
 }(window, document);
