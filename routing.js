@@ -47,6 +47,7 @@ var Routing = function (win, doc) {
 
                 if (self.history.supported) {
 
+                    self.history.initial = self.history.initial || {};
                     self.history.initial.popped = ("state" in win.history), self.history.initial.URL = location.href;
                     win.onpopstate = self.history.popState;
 
@@ -494,7 +495,7 @@ var Routing = function (win, doc) {
         };
     
     return {
-        "version": "0.9.1",
+        "version": "0.9.2",
         "map": doMap,
         "root": doRoot,
         "fallback": doFallback,
