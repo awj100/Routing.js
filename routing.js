@@ -40,18 +40,18 @@ var Routing = function(win, doc) {
                     case 1: // mandatory segments
                         // replace with the supplied value
                         // - this will insert "undefined" is the value has not been supplied in 'params'
-                        route = route.replace(":" + nam, suppliedParam);
+                        route = route.replace(":" + nam, suppliedParamVal);
                         break;
 
                     case 2: // optional segments
-                        if (typeof(suppliedParam) === "undefined") {
+                        if (typeof(suppliedParamVal) === "undefined") {
 
                             // because this is an optional segment, if no value has been supplied then just remove the segment
                             route = route.replace("(/:" + nam + ")", "");
 
                         } else {
 
-                            route = route.replace("(/:" + nam + ")", "/" + suppliedParam);
+                            route = route.replace("(/:" + nam + ")", "/" + suppliedParamVal);
                         }
                         break;
                 }
