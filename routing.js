@@ -594,6 +594,6 @@ var Routing = function(win, doc) {
         /**
          * This version of Routing.js.
          */
-        "version": "0.9.4"
+        "version": "0.9.5"
     };
 }(window, document);
