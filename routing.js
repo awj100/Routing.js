@@ -30,7 +30,10 @@ var Routing = function(win, doc) {
                 var segment = segments[i],
                     typ = getSegmentType(segment), // the type of this segment (static, mandatory, optional)
                     nam = getSegmentName(segment, typ), // the name of this segment
-                    suppliedParam = params[nam]; // the corresponding value for this segment as supplied in the 'params' object (can be "undefined")
+                    suppliedParam = params[nam], // the corresponding value for this segment as supplied in the 'params' object (can be "undefined")
+                    suppliedParamVal = (typeof(suppliedParam) === "object" && typeof(suppliedParam.value) !== "undefined") ?
+                    suppliedParam.value :
+                    suppliedParam; // considers whether suppliedParam is one of Routing.js's objects with a 'hasCHanged' and 'value' property 
 
                 // we're not interested in type 0 (static) as these don't require any processing
                 switch (typ) {
