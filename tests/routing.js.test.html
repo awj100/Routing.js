@@ -1,10 +1,11 @@
 <!DOCTYPE HTML>
 <html>
-    <head>
-        <title>routing.js Test</title>
-        <script type="text/javascript" src="../routing.js"></script>
-        <script type="text/javascript">
-            var hrefs = [
+
+<head>
+    <title>routing.js Test</title>
+    <script type="text/javascript" src="../routing.js"></script>
+    <script type="text/javascript">
+        var hrefs = [
                 "#A",
                 "#/B",
                 "#/C",
@@ -24,16 +25,16 @@
                 "#/H",
                 "#/H/10",
                 "#/H/10/20"
-            ];
-            var index = 0;
-            var timer = null;
-		
-            function update(str) {
+            ],
+            index = 0,
+            timer = null,
+
+            update = function(str) {
                 var d = document.getElementById("actual");
                 d.innerHTML = d.innerHTML + str + "<br/>";
-            }
+            },
 
-            function run_route() {
+            run_route = function() {
                 if (index <= hrefs.length) {
                     if (index == hrefs.length) {
                         window.history.go(-1);
@@ -44,9 +45,11 @@
                 } else {
                     clearInterval(timer);
 
-                    var expected = document.getElementById("expected");
-                    var actual = document.getElementById("actual");
-                    var grade = document.getElementById("grade");
+                    verify_builds();
+
+                    var expected = document.getElementById("expected"),
+                        actual = document.getElementById("actual"),
+                        grade = document.getElementById("grade");
                     if (expected.innerHTML.replace(/\s/g, '') == actual.innerHTML.replace(/\s/g, '')) {
                         grade.innerHTML = "PASS";
                         grade.style.color = "#00FF00";
@@ -55,97 +58,186 @@
                         grade.style.color = "#FF0000";
                     }
                 }
-            }
+            },
 
-            function define_routes() {
+            verify_builds = function() {
+
+                // Build path with two mandatory parameters
+                update(Routing.build("#!/:a/:b", {
+                    a: "param-1",
+                    b: 2
+                }));
+
+                // Build path with a static and two mandatory parameters
+                update(Routing.build("#!/static/:a/:b", {
+                    a: "param-1",
+                    b: 2
+                }));
+
+                // Build path with two mandatory parameters, one undefined
+                update(Routing.build("#!/:a/:b", {
+                    a: "param-1"
+                }));
+
+                // Build path with one mandatory and one optional parameter
+                update(Routing.build("#!/:a(/:b)", {
+                    a: "param-1",
+                    b: "opt"
+                }));
+
+                // Build path with two mandatory parameters and one optional but undefined parameter
+                update(Routing.build("#!/:a/:b(/:c)", {
+                    a: "param-1",
+                    b: 2
+                }));
+
+                update("- trailing slash tests")
+
+                // Build path with two mandatory parameters
+                update(Routing.build("#!/:a/:b/", {
+                    a: "param-1",
+                    b: 2
+                }));
+
+                // Build path with two mandatory parameters, one undefined
+                update(Routing.build("#!/:a/:b/", {
+                    a: "param-1"
+                }));
+
+                // Build path with one mandatory and one optional parameter
+                update(Routing.build("#!/:a(/:b)/", {
+                    a: "param-1",
+                    b: "opt"
+                }));
+
+                // Build path with two mandatory parameters and one optional but undefined parameter
+                update(Routing.build("#!/:a/:b(/:c)/", {
+                    a: "param-1",
+                    b: 2
+                }));
+
+                update("- ommitted hashbang tests")
+
+                // Build path with two mandatory parameters
+                update(Routing.build(":a/:b", {
+                    a: "param-1",
+                    b: 2
+                }));
+
+                // Build path with two mandatory parameters, one undefined
+                update(Routing.build(":a/:b", {
+                    a: "param-1"
+                }));
+
+                // Build path with one mandatory and one optional parameter
+                update(Routing.build(":a(/:b)", {
+                    a: "param-1",
+                    b: "opt"
+                }));
+
+                // Build path with two mandatory parameters and one optional but undefined parameter
+                update(Routing.build(":a/:b(/:c)", {
+                    a: "param-1",
+                    b: 2
+                }));
+
+                // Build path with two mandatory parameters and no hashbang requested
+                update(Routing.build(":a/:b(/:c)", {
+                        a: "param-1",
+                        b: 2
+                    },
+                    false));
+            },
+
+            define_routes = function() {
 
                 // reset any route which might currently be in place
 
                 Routing.map("#A")
-                    .before(function () {
+                    .before(function() {
                         update("A[before]");
                     })
-                    .to(function () {
+                    .to(function() {
                         update("A[action]");
                     })
-                    .leaving(function () {
+                    .leaving(function() {
                         update("A[leaving]");
                     });
 
                 Routing.map("#/B")
-                    .to(function () {
+                    .to(function() {
                         update("B[action]");
                     });
 
                 Routing.map("#/B")
-                    .before(function () {
+                    .before(function() {
                         update("B[before]");
                     });
 
                 Routing.map("#/C")
-                    .to(function () {
+                    .to(function() {
                         update("C[action]");
                     })
-                    .leaving(function () {
+                    .leaving(function() {
                         update("C[leaving]");
                     });
 
                 // No map for #D1 or #D2.  This checks that our rescue method works, and works multiple times in succession.
 
                 Routing.map("#/E/params/:id/parse")
-                    .to(function () {
+                    .to(function() {
                         var param = this.params["id"];
                         update("E[action](parse id=" + param.value + ", hasChanged=" + param.hasChanged + ")");
                     });
 
                 Routing.map("#/E/params/:id/parse")
-                    .before(function () {
+                    .before(function() {
                         var param = this.params["id"];
                         update("E[before](parse id=" + param.value + ", hasChanged=" + param.hasChanged + ")");
                     });
 
                 Routing.map("#/E/params/:id/check")
-                    .to(function () {
+                    .to(function() {
                         var param = this.params["id"];
                         update("E[action](check id=" + param.value + ", hasChanged=" + param.hasChanged + ")");
                     });
 
                 Routing.map("#/E/params/:id/check")
-                    .leaving(function () {
+                    .leaving(function() {
                         var param = this.params["id"];
                         update("E[leaving](check id=" + param.value + ", hasChanged=" + param.hasChanged + ")");
                     });
 
                 Routing.map("#/F")
-                    .before(function () {
+                    .before(function() {
                         update("F[before]");
                     })
-                    .to(function () {
+                    .to(function() {
                         update("F[action]");
                     });
 
                 Routing.map("#!/G")
-                    .before(function () {
+                    .before(function() {
                         update("G[before 1]");
                     })
-                    .before(function () {
+                    .before(function() {
                         update("G[before 2]");
                     })
                     .before([
-                        function () {
+                        function() {
                             update("G[before 3]");
                         },
-                        function () {
+                        function() {
                             update("G[before 4]");
                             return false;
                         }
                     ])
-                    .to(function () {
+                    .to(function() {
                         update("G[action - NOT HIT]");
                     });
 
                 Routing.map("#/H(/:id_one)(/:id_two)")
-                    .to(function () {
+                    .to(function() {
                         var param_one = this.params["id_one"],
                             param_two = this.params["id_two"],
                             val_one = param_one && param_one.value ? param_one.value : "N/A",
@@ -156,7 +248,7 @@
                     });
 
                 Routing.map("#/I/:id_one/:id_two")
-                    .to(function () {
+                    .to(function() {
                         var param_one = this.params["id_one"],
                             param_two = this.params["id_two"],
                             val_one = param_one && param_one.value ? param_one.value : "N/A",
@@ -168,8 +260,8 @@
                     });
 
                 Routing.map("#!J")
-                    .to(function () {
-                        Routing.routes.before(function () {
+                    .to(function() {
+                        Routing.routes.before(function() {
                             if (Routing.routes.current.path === "K/:param") {
                                 update("Global <em>.before()</em> function (param=" + this.params["param"].value + ")");
                                 return false;
@@ -178,13 +270,13 @@
                     });
 
                 Routing.map("#/K/:param")
-                    .to(function () {
+                    .to(function() {
                         update("This result indicates a fail");
                     });
 
                 Routing.map("#/L")
-                    .to(function () {
-                        Routing.routes.leaving(function () {
+                    .to(function() {
+                        Routing.routes.leaving(function() {
                             if (Routing.routes.current.path === "M") {
                                 update("Global <em>.leaving()</em> function");
                             }
@@ -201,117 +293,311 @@
                 Routing.listen();
                 index = 0;
                 timer = setInterval(run_route, 500);
-            }
-        </script>
-		
-        <style type="text/css">
-            body {font-family: arial;}
-            a { cursor: pointer; }
-            p {width: 600px; text-align: justify;}
-            table {font-family: courier;}
-            th { width: 50%; }
-        </style>
-    </head>
-    <body>
-        <div id="description">
-            <h2>Test Suite</h2>
-            <p>
-                Routing.js uses a very straightforward method of testing.  We manually construct
-                a series of method calls that the library should execute under normal working
-                conditions.  We then use JavaScript to simulate the URL changes, and compare
-                the final result with what the result should actually be.  If the end result
-                is anything but perfect, the test is a failure, and this version of Routing.JS
-                is not suitable for use. The expected test results are as follows:
-            </p>
-            <table>
-                <tr><td><b>Token</b></td>                       <td><b>Reason</b></td></tr>
-                <tr><td>F[before]</td>                          <td>Enter method of F, as it is root</td></tr>
-                <tr><td>F[action]</td>                          <td>True action of F, as it is root</td></tr>
-                <tr><td>A[before]</td>                          <td>Enter method of A, as it is looped</td></tr>
-                <tr><td>A[action]</td>                          <td>True action of A, as it is looped</td></tr>
-                <tr><td>A[leaving]</td>                         <td>Exit method of A, as we move to next route</td></tr>
-                <tr><td>B[before]</td>                          <td>Enter method of B, as it is looped</td></tr>
-                <tr><td>B[action]</td>                          <td>True action of B, as it is looped</td></tr>
-                <tr><td>C[action]</td>                          <td>True action of C</td></tr>
-                <tr><td>C[leaving]</td>                         <td>Exit method of C, as we move to next route</td></tr>
-                <tr><td>FALLBACK</td>                           <td>Rescue a route that wasn't found (D1)</td></tr>
-                <tr><td>FALLBACK</td>                           <td>Rescue a route that wasn't found (D2)</td></tr>
-                <tr><td>E[before](parse id=1)</td>              <td>Enter method of a param parsed route</td></tr>
-                <tr><td>E[action](parse id=1)</td>              <td>True action of the route, with param of id=1</td></tr>
-                <tr><td>E[before](parse id=2)</td>              <td>Enter method of the same route again</td></tr>
-                <tr><td>E[action](parse id=2)</td>              <td>True action of the route, with param of id=2</td></tr>
-                <tr><td>E[action](check id=3)</td>              <td>True action of the next route, with param id=3</td></tr>
-                <tr><td>E[leaving](check id=3)</td>             <td>Exit method of parameterized route</td></tr>
-                <tr><td>F[before]</td>                          <td>Enter method of F again, our final route</td></tr>
-                <tr><td>F[action]</td>                          <td>True action of F, our final route</td></tr>
-                <tr><td>I(one=10, two=20, cached=false)</td>    <td>Setting up a route for verifying caching</td></tr>
-                <tr><td>G[before 1]</td>                        <td>First enter method of G</td></tr>
-                <tr><td>G[before 2]</td>                        <td>Second enter method of G</td></tr>
-                <tr><td>G[before 3]</td>                        <td>Third enter method of G</td></tr>
-                <tr><td>G[before 4]</td>                        <td>Last enter method of G - Returns false, stops execution</td></tr>
-                <tr><td>I(one=10, two=20, cached=true)</td>     <td>Verifying caching</td></tr>
-                <tr><td>J</td>                                  <td>Attach a global <em>.before()</em> function</td></tr>
-                <tr><td>K</td>                                  <td>Verify the global <em>.before()</em> function</td></tr>
-                <tr><td>L</td>                                  <td>Attach a global <em>.leaving()</em> function</td></tr>
-                <tr><td>M</td>                                  <td>Verify the global <em>.leaving()</em> function</td></tr>
-                <tr><td>H(one=N/A, two=N/A)</td>                <td>Optional parameters with only the require part submitted</td></tr>
-                <tr><td>H(one=10, two=N/A)</td>                 <td>Optional parameters with one optional part submitted</td></tr>
-                <tr><td>H(one=10, two=20)</td>                  <td>Optional parameters two levels deep</td></tr>
-                <tr><td>H(one=10, two=N/A)</td>                 <td>Testing "back" functionality</td></tr>
-            </table>
-            <p>
-                <input type="button" id="start_test" onclick="javascript: define_routes();" value="Start Test" />&nbsp;<a onclick="javascript: window.location.href=window.location.href.split('#')[0];">reset</a>
-            </p>
-        </div><br /><br />
-        <div id="console">
-            <table>
-                <tr>
-                    <th>
-                        Expected
-                    </th>
-                    <th>
-                        Actual
-                    </th>
-                </tr>
-                <tr style="vertical-align: top;">
-                    <td id="expected">
-                        F[before]<br />
-                        F[action]<br />
-                        A[before]<br />
-                        A[action]<br />
-                        A[leaving]<br />
-                        B[before]<br />
-                        B[action]<br />
-                        C[action]<br />
-                        C[leaving]<br />
-                        FALLBACK<br />
-                        FALLBACK<br />
-                        E[before](parse id=1, hasChanged=true)<br />
-                        E[action](parse id=1, hasChanged=true)<br />
-                        E[before](parse id=2, hasChanged=true)<br />
-                        E[action](parse id=2, hasChanged=true)<br />
-                        E[action](check id=3, hasChanged=true)<br />
-                        E[leaving](check id=3, hasChanged=true)<br />
-                        F[before]<br />
-                        F[action]<br />
-                        I(one=10, two=20, hasChanged=true, true, cached=false)<br />
-                        G[before 1]<br />
-                        G[before 2]<br />
-                        G[before 3]<br />
-                        G[before 4]<br />
-                        I(one=10, two=20, hasChanged=true, true, cached=true)<br />
-                        Global <em>.before()</em> function (param=xyz)<br />
-                        Global <em>.leaving()</em> function<br />
-                        H(one=N/A, two=N/A, hasChanged=true, true)<br />
-                        H(one=10, two=N/A, hasChanged=true, false)<br />
-                        H(one=10, two=20, hasChanged=false, true)<br />
-                        H(one=10, two=N/A, hasChanged=false, true)<br />
-                    </td>
-                    <td id="actual"></td>
-                </tr>
-            </table>
-            <h3>Grade</h3>
-            <div id="grade"></div>
-        </div>
-    </body>
+            };
+    </script>
+
+    <style type="text/css">
+        body {
+            font-family: arial;
+        }
+        
+        a {
+            cursor: pointer;
+        }
+        
+        h3 {
+            display: inline-block;
+            margin: 20px 10px 0 0;
+        }
+        
+        p {
+            width: 600px;
+            text-align: justify;
+        }
+        
+        table {
+            font-family: courier;
+        }
+        
+        th {
+            text-align: left;
+            width: 50%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="description">
+        <h2>Test Suite</h2>
+        <p>
+            Routing.js uses a very straightforward method of testing. We manually construct a series of method calls that the library should execute under normal working conditions. We then use JavaScript to simulate the URL changes, and compare the final result
+            with what the result should actually be. If the end result is anything but perfect, the test is a failure, and this version of Routing.JS is not suitable for use. The expected test results are as follows:
+        </p>
+        <table>
+            <tr>
+                <td><b>Token</b></td>
+                <td><b>Reason</b></td>
+            </tr>
+            <tr>
+                <td>F[before]</td>
+                <td>Enter method of F, as it is root</td>
+            </tr>
+            <tr>
+                <td>F[action]</td>
+                <td>True action of F, as it is root</td>
+            </tr>
+            <tr>
+                <td>A[before]</td>
+                <td>Enter method of A, as it is looped</td>
+            </tr>
+            <tr>
+                <td>A[action]</td>
+                <td>True action of A, as it is looped</td>
+            </tr>
+            <tr>
+                <td>A[leaving]</td>
+                <td>Exit method of A, as we move to next route</td>
+            </tr>
+            <tr>
+                <td>B[before]</td>
+                <td>Enter method of B, as it is looped</td>
+            </tr>
+            <tr>
+                <td>B[action]</td>
+                <td>True action of B, as it is looped</td>
+            </tr>
+            <tr>
+                <td>C[action]</td>
+                <td>True action of C</td>
+            </tr>
+            <tr>
+                <td>C[leaving]</td>
+                <td>Exit method of C, as we move to next route</td>
+            </tr>
+            <tr>
+                <td>FALLBACK</td>
+                <td>Rescue a route that wasn't found (D1)</td>
+            </tr>
+            <tr>
+                <td>FALLBACK</td>
+                <td>Rescue a route that wasn't found (D2)</td>
+            </tr>
+            <tr>
+                <td>E[before](parse id=1)</td>
+                <td>Enter method of a param parsed route</td>
+            </tr>
+            <tr>
+                <td>E[action](parse id=1)</td>
+                <td>True action of the route, with param of id=1</td>
+            </tr>
+            <tr>
+                <td>E[before](parse id=2)</td>
+                <td>Enter method of the same route again</td>
+            </tr>
+            <tr>
+                <td>E[action](parse id=2)</td>
+                <td>True action of the route, with param of id=2</td>
+            </tr>
+            <tr>
+                <td>E[action](check id=3)</td>
+                <td>True action of the next route, with param id=3</td>
+            </tr>
+            <tr>
+                <td>E[leaving](check id=3)</td>
+                <td>Exit method of parameterized route</td>
+            </tr>
+            <tr>
+                <td>F[before]</td>
+                <td>Enter method of F again, our final route</td>
+            </tr>
+            <tr>
+                <td>F[action]</td>
+                <td>True action of F, our final route</td>
+            </tr>
+            <tr>
+                <td>I(one=10, two=20, cached=false)</td>
+                <td>Setting up a route for verifying caching</td>
+            </tr>
+            <tr>
+                <td>G[before 1]</td>
+                <td>First enter method of G</td>
+            </tr>
+            <tr>
+                <td>G[before 2]</td>
+                <td>Second enter method of G</td>
+            </tr>
+            <tr>
+                <td>G[before 3]</td>
+                <td>Third enter method of G</td>
+            </tr>
+            <tr>
+                <td>G[before 4]</td>
+                <td>Last enter method of G - Returns false, stops execution</td>
+            </tr>
+            <tr>
+                <td>I(one=10, two=20, cached=true)</td>
+                <td>Verifying caching</td>
+            </tr>
+            <tr>
+                <td>J</td>
+                <td>Attach a global <em>.before()</em> function</td>
+            </tr>
+            <tr>
+                <td>K</td>
+                <td>Verify the global <em>.before()</em> function</td>
+            </tr>
+            <tr>
+                <td>L</td>
+                <td>Attach a global <em>.leaving()</em> function</td>
+            </tr>
+            <tr>
+                <td>M</td>
+                <td>Verify the global <em>.leaving()</em> function</td>
+            </tr>
+            <tr>
+                <td>H(one=N/A, two=N/A)</td>
+                <td>Optional parameters with only the require part submitted</td>
+            </tr>
+            <tr>
+                <td>H(one=10, two=N/A)</td>
+                <td>Optional parameters with one optional part submitted</td>
+            </tr>
+            <tr>
+                <td>H(one=10, two=20)</td>
+                <td>Optional parameters two levels deep</td>
+            </tr>
+            <tr>
+                <td>H(one=10, two=N/A)</td>
+                <td>Testing "back" functionality</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/2</td>
+                <td>Build path with two mandatory parameters</td>
+            </tr>
+            <tr>
+                <td>#!/static/param-1/2</td>
+                <td>Build path with a static two mandatory parameters</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/undefined</td>
+                <td>Build path with two mandatory parameters, one undefined</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/opt</td>
+                <td>Build path with one mandatory and one optional parameter</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/2</td>
+                <td>Build path with two mandatory parameters and one optional but undefined parameter</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/2/</td>
+                <td>Build path with two mandatory parameters with trailing slash</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/undefined/</td>
+                <td>Build path with two mandatory parameters, one undefined, with trailing slash</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/opt/</td>
+                <td>Build path with one mandatory and one optional parameter, with trailing slash</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/2/</td>
+                <td>Build path with two mandatory parameters and one optional but undefined parameter, with trailing slash</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/2</td>
+                <td>Build path with two mandatory parameters with hashbang ommitted</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/undefined</td>
+                <td>Build path with two mandatory parameters, one undefined, with hashbang ommitted</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/opt</td>
+                <td>Build path with one mandatory and one optional parameter, with hashbang ommitted</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/2</td>
+                <td>Build path with two mandatory parameters and one optional but undefined parameter, with hashbang ommitted</td>
+            </tr>
+            <tr>
+                <td>#!/param-1/2</td>
+                <td>Build path with two mandatory parameters and no hasbang requested</td>
+            </tr>
+        </table>
+        <p>
+            <input type="button" id="start_test" onclick="javascript: define_routes();" value="Start Test" />&nbsp;<a onclick="javascript: window.location.href=window.location.href.split('#')[0];">reset</a>
+        </p>
+    </div><br /><br />
+    <div id="console">
+        <table>
+            <tr>
+                <th>
+                    Expected
+                </th>
+                <th>
+                    Actual
+                </th>
+            </tr>
+            <tr style="vertical-align: top;">
+                <td id="expected">
+                    F[before]
+                    <br /> F[action]
+                    <br /> A[before]
+                    <br /> A[action]
+                    <br /> A[leaving]
+                    <br /> B[before]
+                    <br /> B[action]
+                    <br /> C[action]
+                    <br /> C[leaving]
+                    <br /> FALLBACK
+                    <br /> FALLBACK
+                    <br /> E[before](parse id=1, hasChanged=true)
+                    <br /> E[action](parse id=1, hasChanged=true)
+                    <br /> E[before](parse id=2, hasChanged=true)
+                    <br /> E[action](parse id=2, hasChanged=true)
+                    <br /> E[action](check id=3, hasChanged=true)
+                    <br /> E[leaving](check id=3, hasChanged=true)
+                    <br /> F[before]
+                    <br /> F[action]
+                    <br /> I(one=10, two=20, hasChanged=true, true, cached=false)
+                    <br /> G[before 1]
+                    <br /> G[before 2]
+                    <br /> G[before 3]
+                    <br /> G[before 4]
+                    <br /> I(one=10, two=20, hasChanged=true, true, cached=true)
+                    <br /> Global <em>.before()</em> function (param=xyz)
+                    <br /> Global <em>.leaving()</em> function
+                    <br /> H(one=N/A, two=N/A, hasChanged=true, true)
+                    <br /> H(one=10, two=N/A, hasChanged=true, false)
+                    <br /> H(one=10, two=20, hasChanged=false, true)
+                    <br /> H(one=10, two=N/A, hasChanged=false, true)
+                    <br /> #!/param-1/2
+                    <br /> #!/static/param-1/2
+                    <br /> #!/param-1/undefined
+                    <br /> #!/param-1/opt
+                    <br /> #!/param-1/2
+                    <br /> - trailing slash tests
+                    <br /> #!/param-1/2/
+                    <br /> #!/param-1/undefined/
+                    <br /> #!/param-1/opt/
+                    <br /> #!/param-1/2/
+                    <br /> - ommitted hashbang tests
+                    <br /> #!/param-1/2
+                    <br /> #!/param-1/undefined
+                    <br /> #!/param-1/opt
+                    <br /> #!/param-1/2
+                    <br /> param-1/2
+                    <br />
+                </td>
+                <td id="actual"></td>
+            </tr>
+        </table>
+        <h3>Grade:</h3>
+        <span id="grade"></span>
+    </div>
+</body>
+
 </html>
