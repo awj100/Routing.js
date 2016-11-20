@@ -147,6 +147,18 @@
                         b: 2
                     },
                     false));
+
+                // Build path with two mandatory parameters where the supplied params are objects with "value" properties
+                update(Routing.build(":a/:b(/:c)", {
+                    a: {
+                        hasChanged: true,
+                        value: "param-1"
+                    },
+                    b: {
+                        hasChanged: true,
+                        value: 2
+                    }
+                }));
             },
 
             define_routes = function() {
@@ -526,6 +538,10 @@
                 <td>#!/param-1/2</td>
                 <td>Build path with two mandatory parameters and no hasbang requested</td>
             </tr>
+            <tr>
+                <td>#!/param-1/2</td>
+                <td>Build path with two mandatory parameters where the supplied params are objects with "value" properties</td>
+            </tr>
         </table>
         <p>
             <input type="button" id="start_test" onclick="javascript: define_routes();" value="Start Test" />&nbsp;<a onclick="javascript: window.location.href=window.location.href.split('#')[0];">reset</a>
@@ -590,6 +606,7 @@
                     <br /> #!/param-1/opt
                     <br /> #!/param-1/2
                     <br /> param-1/2
+                    <br /> #!/param-1/2
                     <br />
                 </td>
                 <td id="actual"></td>
