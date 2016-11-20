@@ -4,11 +4,60 @@ Routing.js is hosted at https://github.com/awj100/Routing.js
 Routing.js was forked from PathJS, https://github.com/mtrpcic/pathjs
 */
 
-var Routing = function (win, doc) {
+var Routing = function(win, doc) {
 
     var self = this,
 
         doBefore = [],
+
+        doBuild = function(route, params, includeHashbang) {
+
+            if (typeof(includeHashbang) === "undefined") {
+                includeHashbang = true;
+            }
+
+            // remove the hashbang
+            // - as this is optional, removing it means we can be sure to add it before returning
+            route = route.replace(/#!?\/?/, "");
+
+            // split each of the segments
+            var segments = route.split(/[/|\(/?]+/),
+                i = 0,
+                iMax = segments.length;
+
+            for (; i < iMax; i++) {
+
+                var segment = segments[i],
+                    typ = getSegmentType(segment), // the type of this segment (static, mandatory, optional)
+                    nam = getSegmentName(segment, typ), // the name of this segment
+                    suppliedParam = params[nam]; // the corresponding value for this segment as supplied in the 'params' object (can be "undefined")
+
+                // we're not interested in type 0 (static) as these don't require any processing
+                switch (typ) {
+                    case 1: // mandatory segments
+                        // replace with the supplied value
+                        // - this will insert "undefined" is the value has not been supplied in 'params'
+                        route = route.replace(":" + nam, suppliedParam);
+                        break;
+
+                    case 2: // optional segments
+                        if (typeof(suppliedParam) === "undefined") {
+
+                            // because this is an optional segment, if no value has been supplied then just remove the segment
+                            route = route.replace("(/:" + nam + ")", "");
+
+                        } else {
+
+                            route = route.replace("(/:" + nam + ")", "/" + suppliedParam);
+                        }
+                        break;
+                }
+            }
+
+            return includeHashbang ?
+                "#!/" + route :
+                route;
+        },
 
         doLeaving = null,
 
@@ -71,7 +120,7 @@ var Routing = function (win, doc) {
 
         refreshing = false,
 
-        route = function(path) {
+        Route = function(routeTemplate) {
 
             var thisRoute = this;
 
@@ -82,10 +131,10 @@ var Routing = function (win, doc) {
             thisRoute.mandatory = 0;
             thisRoute.mandWithOpts = 0;
             thisRoute.params = {};
-            thisRoute.path = path;
+            thisRoute.path = routeTemplate;
             thisRoute.segments = [];
 
-            thisRoute.before = function (fns) {
+            thisRoute.before = function(fns) {
 
                 if (Object.prototype.toString.call(fns) === '[object Array]') {
 
@@ -99,14 +148,14 @@ var Routing = function (win, doc) {
                 return thisRoute;
             };
 
-            thisRoute.leaving = function (fn) {
+            thisRoute.leaving = function(fn) {
 
                 thisRoute.doLeaving = fn;
 
                 return thisRoute;
             };
 
-            thisRoute.run = function () {
+            thisRoute.run = function() {
 
                 var i = 0,
                     iMax = routes["defined"].length,
@@ -126,7 +175,7 @@ var Routing = function (win, doc) {
 
                                 result = definedRoute.doBefore[i].apply(thisRoute, []);
 
-                                if (typeof (result) === "boolean" && !result) {
+                                if (typeof(result) === "boolean" && !result) {
                                     return false;
                                 }
                             }
@@ -138,13 +187,13 @@ var Routing = function (win, doc) {
 
                                 result = doBefore[j].apply(thisRoute, []);
 
-                                if (typeof (result) === "boolean" && !result) {
+                                if (typeof(result) === "boolean" && !result) {
                                     return false;
                                 }
                             }
                         }
 
-                        if (typeof (definedRoute.action) === "function") {
+                        if (typeof(definedRoute.action) === "function") {
                             definedRoute.action();
                         }
 
@@ -153,7 +202,7 @@ var Routing = function (win, doc) {
                 }
             };
 
-            thisRoute.to = function (fn) {
+            thisRoute.to = function(fn) {
 
                 thisRoute.action = fn;
 
@@ -199,9 +248,9 @@ var Routing = function (win, doc) {
                     var thisPropVal = params[propertyName]["value"],
                         previousProp = previousParams[propertyName];
 
-                    params[propertyName]["hasChanged"] = typeof (previousProp) !== "undefined"
-                                                         ? previousProp["value"] !== thisPropVal
-                                                         : true;
+                    params[propertyName]["hasChanged"] = typeof(previousProp) !== "undefined" ?
+                        previousProp["value"] !== thisPropVal :
+                        true;
                 }
             }
 
@@ -228,12 +277,12 @@ var Routing = function (win, doc) {
                 routes.current = doMatch(passedPath);
                 refreshing = false;
 
-                if (routes.previous && routes.previous.doLeaving !== null && typeof (routes.previous.doLeaving) === "function") {
+                if (routes.previous && routes.previous.doLeaving !== null && typeof(routes.previous.doLeaving) === "function") {
 
                     routes.previous.doLeaving();
                 }
 
-                if (doLeaving !== null && typeof (doLeaving) === "function") {
+                if (doLeaving !== null && typeof(doLeaving) === "function") {
                     doLeaving();
                 }
 
@@ -282,19 +331,19 @@ var Routing = function (win, doc) {
             }
         },
 
-        doMap = function (path) {
+        doMap = function(routeTemplate) {
 
-            path = path.replace(/#!?\/?/, "");
+            routeTemplate = routeTemplate.replace(/#!?\/?/, "");
 
             // check whether this route has already been declared
             for (var i = 0, iMax = routes["defined"].length; i < iMax; i++) {
-                if (routes["defined"][i].path === path) {
+                if (routes["defined"][i].path === routeTemplate) {
                     return routes["defined"][i];
                 }
             }
 
-            var segments = path.split(/[/|\(/?]+/),
-                r = new route(path),
+            var segments = routeTemplate.split(/[/|\(/?]+/),
+                r = new Route(routeTemplate),
                 i = 0,
                 iMax = segments.length;
 
@@ -323,14 +372,14 @@ var Routing = function (win, doc) {
             return r;
         },
 
-        doMatch = function(path) {
+        doMatch = function(routeTemplate) {
 
             var definedRoute;
 
             // check whether we have this path in the cache
             for (var i = 0, iMax = routes.cache.length; i < iMax; i++) {
 
-                if (routes.cache[i].path === path) {
+                if (routes.cache[i].path === routeTemplate) {
 
                     // this path has been cached
 
@@ -349,7 +398,7 @@ var Routing = function (win, doc) {
 
             var i = 0,
                 iMax = routes["defined"].length,
-                segments = path.split("/");
+                segments = routeTemplate.split("/");
 
             // loop through each route
             // - remember that the routes are ordered from the most params to the least
@@ -405,7 +454,7 @@ var Routing = function (win, doc) {
                     // cache this route
                     routes.cache.push({
                         params: params,
-                        path: path,
+                        path: routeTemplate,
                         mappedTo: definedRoute
                     });
 
@@ -423,19 +472,22 @@ var Routing = function (win, doc) {
 
         doRefresh = function() {
 
-            var params = routes !== null && routes.current !== null
-                             ? routes.current.split("/")
-                             : [];
+            var current = win.location.hash;
 
-            params.push("refresh");
-            win.location.hash = params.join("/");
+            if (current === null || current.length === 0) {
+                return false;
+            }
+
+            win.location.hash = current + (current.charAt(current.length - 1) === "/" ?
+                "refresh" :
+                "/refresh");
 
             return true;
         },
 
-        doRoot = function(path) {
+        doRoot = function(routeTemplate) {
 
-            routes.root = path;
+            routes.root = routeTemplate;
         },
 
         getSegmentName = function(segment, typ) {
@@ -460,11 +512,13 @@ var Routing = function (win, doc) {
             // "world" = 1  - param
             // " opt-param = 2  - optional param
 
-            return segment.charAt(0) === ":"
-                       ? segment.charAt(segment.length - 1) === ")"
-                             ? 2 // optional param
-                             : 1 // param
-                       : 0; // static (text) segment
+            return segment.charAt(0) === ":" ?
+                segment.charAt(segment.length - 1) === ")" ?
+                2 // optional param
+                :
+                1 // param
+                :
+                0; // static (text) segment
         },
 
         orderBySegments = function compare(a, b) {
@@ -490,13 +544,53 @@ var Routing = function (win, doc) {
         };
 
     return {
+        /**
+         * Builds a route from the given template and parameters.
+         * param {string} route - The route template into which the parameters should be inserted.
+         * param {object} params - An object containing the parameters which should replace the segments in the route.
+         * param {boolean} includeHashbang (Optional) - Indicates whether the returned (populated) route should include the hashbang.
+         */
+        "build": doBuild,
+
+        /**
+         * Adds a function which will handle missing routes.
+         * @param  {function} fn - A function which will be called when the browser has navigated to a route which has not been declared.
+         */
         "fallback": doFallback,
+
         "history": history,
+
+        /**
+         * Starts Routing.js listening to changes in the URL
+         */
         "listen": doListen,
+
+        /**
+         * Adds a route to the collection of handled routes.
+         * @param  {string} routeTemplate - The template of the route to be added.
+         */
         "map": doMap,
+
+        /**
+         * A function which forces the current route to be reloaded. Has no effect if there is no current client-side route.
+         */
         "refresh": doRefresh,
+
+        /**
+         * The default route to be used if a user lands on a page without a cllient-side route. 
+         * @param {string} - routeTemplate - The default route.
+         */
         "root": doRoot,
+
+        /**
+         * The current collection of routes.
+         * @returns {object} An object containing details of the declared routes.
+         */
         "routes": routes,
-        "version": "0.9.3"
+
+        /**
+         * This version of Routing.js.
+         */
+        "version": "0.9.4"
     };
 }(window, document);
